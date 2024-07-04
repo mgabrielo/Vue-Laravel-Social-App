@@ -28,15 +28,10 @@
                                         <UserTag :post="props.post" :show-name="true" :show-time="false"
                                             :class="['gap-2']" />
                                     </div>
-                                    <div class="pt-5 pb-8 w-full">
+                                    <div class="py-3 w-full">
                                         <!-- Input Editor -->
                                         <ckeditor :editor="editor" v-model="form.body" :config="editorConfig"></ckeditor>
 
-                                        <!-- Notification -->
-                                        <div v-if="notificationError && showNotification"
-                                            class="w-full justify-center text-center text-md font-semibold pt-5 text-red-600">
-                                            {{ notificationError }}
-                                        </div>
                                         <!--attachment -->
                                         <div :class="['gap-2 my-1',
                                             attachmentFiles.length === 1 ? 'grid grid-cols-1' :
@@ -78,9 +73,13 @@
                                                 </div>
                                             </template>
                                         </div>
+                                        <!-- Notification -->
+                                        <div v-if="notificationError && showNotification"
+                                            class="w-full justify-center text-center text-md font-semibold pt-5 text-red-600">
+                                            {{ notificationError }}
+                                        </div>
                                         <!-- duplicate -->
-                                        <pre>{{ form.deletedFileIds }}</pre>
-                                        <div :class="['gap-2 my-1',
+                                        <div :class="['gap-2 my-3',
                                             computedAttachments.length === 1 ? 'grid grid-cols-1' :
                                                 computedAttachments.length % 2 === 0 ? ' grid grid-cols-2' :
                                                     computedAttachments.length % 2 !== 0 && ' grid grid-cols-2'
@@ -241,7 +240,9 @@ const removeAttachedFile = (selectedFile) => {
     if (selectedFile.file) {
         attachmentFiles.value = attachmentFiles.value.filter((file) => file !== selectedFile)
     } else {
-        form.deletedFileIds.push(selectedFile.id)
+        if (!form.deletedFileIds.includes(selectedFile.id)) {
+            form.deletedFileIds.push(selectedFile.id);
+        }
         selectedFile.deleted = true
     }
 }
@@ -284,8 +285,14 @@ function submitPost() {
             preserveScroll: true,
             onSuccess: () => closeModal(),
             onError: (err) => {
-                if (err["attachments.0"] || err?.body) {
-                    notificationError.value = err["attachments.0"].toString() || err.body
+                if (err) {
+                    Object.keys(err).forEach(key => {
+                        const messages = Array.isArray(err[key]) ? err[key] : [err[key]];
+                        messages.forEach(message => {
+                            console.log(`${key}: ${message}`);
+                            notificationError.value = message;
+                        });
+                    });
                 }
                 setTimeout(() => {
                     showNotification.value = false
@@ -302,8 +309,14 @@ function submitPost() {
                 closeModal()
             },
             onError: (err) => {
-                if (err["attachments.0"] || err?.body) {
-                    notificationError.value = err["attachments.0"].toString() || err.body
+                if (err) {
+                    Object.keys(err).forEach(key => {
+                        const messages = Array.isArray(err[key]) ? err[key] : [err[key]];
+                        messages.forEach(message => {
+                            console.log(`${key}: ${message}`);
+                            notificationError.value = message;
+                        });
+                    });
                 }
                 setTimeout(() => {
                     showNotification.value = false

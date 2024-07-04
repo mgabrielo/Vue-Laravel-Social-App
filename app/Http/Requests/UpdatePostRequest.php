@@ -25,7 +25,12 @@ class UpdatePostRequest extends FormRequest
             'body' => ['nullable', 'string', 'min:1'],
             'id' => ['required', 'numeric'],
             'attachments' => ['nullable', 'array', 'max:10'],
-            'attachments.*' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp3,wav,wma,mp4,avi,mkv,pdf,csv,xlsx,zip,rar'],
+            'attachments.*' => [
+                'required', 
+                'file', 
+                'mimes:jpg,jpeg,png,webp,gif,mp3,wav,wma,mp4,avi,mkv,pdf,csv,xlsx,zip,rar',
+                'max:20480'
+            ],
             'deletedFileIds' => ['nullable', 'array'],
             'deletedFileIds.*' => ['nullable', 'numeric'],
         ];
@@ -54,6 +59,7 @@ class UpdatePostRequest extends FormRequest
             'attachments.max' => 'You may not upload more than 10 attachments.',
             'attachments.*.file' => 'Invalid attachment file.',
             'attachments.*.mimes' => 'Invalid file type for attachments. Allowed types are: jpg, jpeg, png, webp, gif, mp3, wav, wma, mp4, avi, mkv, doc, docx, pdf, csv, xlsx, zip, rar.',
+            'attachments.*.max' => 'Each attachment may not be larger than 20MB.',
         ];
     }
 

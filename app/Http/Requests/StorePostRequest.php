@@ -22,18 +22,14 @@ class StorePostRequest extends FormRequest
      */
     public function rules(): array
     {
-        $file_size=100 * 1024 * 1024;
+        $file_size=20 * 1024 * 1024;
         return [
             'body'=> ['nullable', 'string'],
             'attachments'=>['nullable','array','max:10'],
-            'attachments.*'=>[
-                File::types([
-                    'jpg','jpeg','png','webp','gif',  /* Image types */
-                    'mp3','wav','wma',  /* Audio types */
-                    'mp4','avi','mkv',  /* Video types */
-                    'pdf','csv', 'xlsx',  /* Document types */
-                    'zip', 'rar' /* Archive types */
-                ])->max($file_size)
+            'attachments.*' => [
+                'file',
+                'mimes:jpg,jpeg,png,webp,gif,mp3,wav,wma,mp4,avi,mkv,pdf,csv,xlsx,zip,rar',
+                'max:20480'  // 20MB in kilobytes
             ],
             'user_id' => ['numeric'],
         ];
@@ -59,7 +55,7 @@ class StorePostRequest extends FormRequest
             'attachments.max' => 'You may not upload more than 10 attachments.',
             'attachments.*.file' => 'Each attachment must be a valid file type.',
             'attachments.*.mimes' => 'Allowed types are jpg, jpeg, png, webp, gif, mp3, wav, wma, mp4, avi, mkv, doc, docx, pdf, csv, xlsx, zip, rar.',
-            'attachments.*.max' => 'Each attachment may not be greater than 100MB.',
+            'attachments.*.max' => 'Each attachment may not be greater than 20MB.',
         ];
     }
 
