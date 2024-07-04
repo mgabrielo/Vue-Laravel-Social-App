@@ -289,7 +289,6 @@ function submitPost() {
                     Object.keys(err).forEach(key => {
                         const messages = Array.isArray(err[key]) ? err[key] : [err[key]];
                         messages.forEach(message => {
-                            console.log(`${key}: ${message}`);
                             notificationError.value = message;
                         });
                     });
@@ -313,7 +312,6 @@ function submitPost() {
                     Object.keys(err).forEach(key => {
                         const messages = Array.isArray(err[key]) ? err[key] : [err[key]];
                         messages.forEach(message => {
-                            console.log(`${key}: ${message}`);
                             notificationError.value = message;
                         });
                     });
