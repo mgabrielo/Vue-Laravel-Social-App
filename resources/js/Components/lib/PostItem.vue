@@ -9,6 +9,8 @@ import {
 import UserTag from '@/Components/lib/UserTag.vue'
 import { usePage, router } from '@inertiajs/vue3'
 import { isImage } from '@/utils.js'
+import axiosClient from '@/axiosClient';
+
 const props = defineProps({
     post: Object
 })
@@ -35,6 +37,14 @@ function submitDelete() {
 const openAttachmentPreview = (attachment, index) => {
     const result = { attachment, index }
     emit('attachmentClick', result)
+}
+
+const sendReaction = async () => {
+    await axiosClient.post(route('post.reaction', props.post), { reaction: 'like' }).then((res) => {
+        if (res.status == 200) {
+            console.log(res.data)
+        }
+    })
 }
 </script>
 
@@ -143,7 +153,7 @@ const openAttachmentPreview = (attachment, index) => {
             </template>
         </div>
         <div class="flex py-2 px-2 gap-2">
-            <button
+            <button @click="sendReaction"
                 class="flex flex-1 justify-center gap-2 group items-center text-gray-500 hover:text-gray-700 p-2 bg-gray-200 rounded-lg">
                 <HandThumbUpIcon class="size-5" />
                 <span class="text-gray-600 group-hover:text-gray-800 font-medium">Like</span>

@@ -30,8 +30,9 @@ const showCreatePostModal = () => {
             <TextInput :more-class="['w-full border-gray-300 py-1 px-2 dark:border-gray-700 dark:bg-gray-900',
                 'dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 ',
                 'dark:focus:ring-indigo-600 focus:ring-indigo-500 rounded-md shadow-sm overflow-hidden',
-            ]" placeholder="Start Here to Create Post" :rows="1" v-model="newPost.body" :auto-resize="true">
-            </TextInput>
+            ]" placeholder="Start Here to Create Post" :rows="1" v-model="newPost.body" :auto-resize="true"
+                :readonly="true" />
+
         </div>
         <!-- <pre>{{ newPost.body }}</pre> -->
         <!-- <div  class="flex gap-2 justify-between">

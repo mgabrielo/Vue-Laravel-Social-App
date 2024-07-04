@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\PostReaction;
 use Illuminate\Http\Request;
 use App\Models\PostAttachment;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use App\Http\Enums\PostReactionEnum;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StorePostRequest;
 use Illuminate\Support\Facades\Storage;
@@ -121,7 +124,7 @@ class PostController extends Controller
                 Storage::disk('public')->delete($filePath);
             }
             DB::rollback();
-                return redirect()->back()->withErrors(['error' =>'Failed to create post: ' . $e->getMessage()]);
+                return redirect()->back()->withErrors(['error' =>'Failed to update post: ' . $e->getMessage()]);
         }
     }
 
@@ -137,5 +140,26 @@ class PostController extends Controller
         $post->delete();
         return back();
 
+    }
+
+    public function postReaction(Request $request ,Post $post)
+    {
+        // dd($request->all());
+        $data=$request->validate([
+            'reaction' => [Rule::enum(PostReactionEnum::class)]
+        ]);
+        try{
+            $reaction= PostReaction::create([
+                'post_id'=> $post->id,
+                'user_id'=> Auth::id(),
+                'type'=> $data['reaction']
+            ]);
+            return response()->json([
+                'success'=>true,
+                'reactions'=>'1.3k',
+            ])->setStatusCode(200);
+        }catch(Exception $e){
+            return redirect()->back()->withErrors(['error' =>'Failed to post reaction: ' . $e->getMessage()]);
+        }
     }
 }
