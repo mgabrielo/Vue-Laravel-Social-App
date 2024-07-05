@@ -149,14 +149,23 @@ class PostController extends Controller
             'reaction' => [Rule::enum(PostReactionEnum::class)]
         ]);
         try{
-            $reaction= PostReaction::create([
-                'post_id'=> $post->id,
-                'user_id'=> Auth::id(),
-                'type'=> $data['reaction']
-            ]);
+            $userId=Auth::id();
+            $reaction=PostReaction::where('user_id', $userId)->where('post_id', $post->id)->first();
+            if($reaction){
+                $reaction->delete();
+                $hasReaction=false;
+            }else{
+                PostReaction::create([
+                    'post_id'=> $post->id,
+                    'user_id'=> $userId,
+                    'type'=> $data['reaction']
+                ]);
+                $hasReaction=true;
+            }
+            $reactions= PostReaction::where('post_id',$post->id)->count();
             return response()->json([
-                'success'=>true,
-                'reactions'=>'1.3k',
+                'has_reaction'=>$hasReaction,
+                'num_of_reactions'=>$reactions,
             ])->setStatusCode(200);
         }catch(Exception $e){
             return redirect()->back()->withErrors(['error' =>'Failed to post reaction: ' . $e->getMessage()]);

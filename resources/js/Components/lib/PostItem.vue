@@ -41,8 +41,9 @@ const openAttachmentPreview = (attachment, index) => {
 
 const sendReaction = async () => {
     await axiosClient.post(route('post.reaction', props.post), { reaction: 'like' }).then((res) => {
-        if (res.status == 200) {
-            console.log(res.data)
+        if (res.status == 200 && res.data && props.post) {
+            props.post.has_reaction = res.data?.has_reaction;
+            props.post.num_of_reactions = res.data?.num_of_reactions
         }
     })
 }
@@ -153,10 +154,13 @@ const sendReaction = async () => {
             </template>
         </div>
         <div class="flex py-2 px-2 gap-2">
-            <button @click="sendReaction"
-                class="flex flex-1 justify-center gap-2 group items-center text-gray-500 hover:text-gray-700 p-2 bg-gray-200 rounded-lg">
+            <button @click="sendReaction" :class="['flex flex-1 justify-center gap-2 group items-center p-2 rounded-lg',
+                post?.has_reaction ? 'text-blue-600 hover:text-blue-800 bg-blue-200' : 'text-gray-500 hover:text-gray-700 bg-gray-200'
+            ]">
                 <HandThumbUpIcon class="size-5" />
-                <span class="text-gray-600 group-hover:text-gray-800 font-medium">Like</span>
+                <span class="text-gray-600 group-hover:text-gray-800 font-medium">
+                    {{ post?.has_reaction ? 'Unlike' : 'Like' }}
+                </span>
             </button>
             <button
                 class="flex flex-1 justify-center gap-2  group items-center text-gray-500 hover:text-gray-700 p-2  bg-gray-200 rounded-lg ">

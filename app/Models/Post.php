@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\User;
 use App\Models\Group;
+use App\Models\PostReaction;
 use App\Models\PostAttachment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -31,5 +32,9 @@ class Post extends Model
 
     public function attachments():HasMany{
          return $this->hasMany(PostAttachment::class)->latest();
+    }
+    
+    public function reactions():HasMany{
+          return $this->hasMany(PostReaction::class);
     }
 }
