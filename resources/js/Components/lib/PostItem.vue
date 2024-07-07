@@ -1,15 +1,19 @@
 <script setup>
 import { computed } from 'vue'
 import { DocumentIcon, ArrowDownTrayIcon, HandThumbUpIcon, ChatBubbleLeftRightIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
-import { PencilIcon, TrashIcon, PlusCircleIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon, TrashIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline'
 import {
     Disclosure, DisclosureButton, DisclosurePanel,
     Menu, MenuButton, MenuItems, MenuItem,
 } from '@headlessui/vue'
+import TextInput from '@/Components/TextInput.vue';
 import UserTag from '@/Components/lib/UserTag.vue'
 import { usePage, router } from '@inertiajs/vue3'
 import { isImage } from '@/utils.js'
 import axiosClient from '@/axiosClient';
+import PrimaryButton from '../PrimaryButton.vue';
+import { ref } from 'vue';
+import ReadLessOrMore from './ReadLessOrMore.vue';
 
 const props = defineProps({
     post: Object
@@ -18,7 +22,7 @@ const props = defineProps({
 const authUser = usePage().props.auth.user
 const isYourProfile = computed(() => authUser && authUser.id === props.post.user.id)
 const computedAttachmentLength = computed(() => props.post.attachments.length - 4)
-
+const newCommentValue = ref('')
 const emit = defineEmits(['editClick', 'attachmentClick'])
 
 function openEditModal() {
@@ -44,6 +48,15 @@ const sendReaction = async () => {
         if (res.status == 200 && res.data && props.post) {
             props.post.has_reaction = res.data?.has_reaction;
             props.post.num_of_reactions = res.data?.num_of_reactions
+        }
+    })
+}
+
+const createUserComment = async () => {
+    await axiosClient.post(route('post.comment.create', props.post), { comment: newCommentValue.value }).then((res) => {
+        if (res.data?.comment && props.post) {
+            newCommentValue.value = ''
+            console.log(res.data)
         }
     })
 }
@@ -93,21 +106,9 @@ const sendReaction = async () => {
             </div>
         </div>
         <div>
-            <Disclosure v-slot="{ open }" v-if="props.post?.body">
-                <div class="ck-content" v-if="!open && props.post?.body.length < 100" v-html="props.post?.body" />
-                <div class="ck-content" v-if="!open && props.post?.body.length > 100"
-                    v-html="props.post?.body.substring(0, 100) + '...'" />
-                <DisclosurePanel>
-                    <div class="ck-content" v-html="props.post?.body" />
-                </DisclosurePanel>
-                <div class="flex justify-end px-3">
-                    <DisclosureButton v-if="props.post?.body.length > 100" class="text-blue-500 mt-2 hover:underline">
-                        <span>{{ !open ? "Read More" : "Read Less" }}</span>
-                    </DisclosureButton>
-                </div>
-            </Disclosure>
-
+            <ReadLessOrMore :body="post.body" />
         </div>
+        <!-- Attachment Section -->
         <div @click="openAttachment" :class="['gap-2 my-1',
             props.post?.attachments.length === 1 ? 'grid grid-cols-1' :
                 props.post?.attachments.length % 2 === 0 ? ' grid grid-cols-2' :
@@ -129,7 +130,7 @@ const sendReaction = async () => {
                     :class="[index > 0 && index < 3 && props.post?.attachments.length === 3 ? 'flex flex-col' : '']">
                     <div
                         class="group max-w-full truncate text-wrap relative aspect-square cursor-pointer bg-blue-100 flex flex-col items-center justify-center gap-3 rounded-lg size-full">
-                        <!-- Attachment -->
+
                         <div v-if="index === 3 && computedAttachmentLength > 0"
                             class="absolute inset-0 flex justify-center items-center text-xl z-10 bg-black/30 text-white">
                             +{{ computedAttachmentLength }} more
@@ -153,20 +154,63 @@ const sendReaction = async () => {
                 </div>
             </template>
         </div>
-        <div class="flex py-2 px-2 gap-2">
-            <button @click="sendReaction" :class="['flex flex-1 justify-center gap-2 group items-center p-2 rounded-lg',
-                post?.has_reaction ? 'text-blue-600 hover:text-blue-800 bg-blue-200' : 'text-gray-500 hover:text-gray-700 bg-gray-200'
-            ]">
-                <HandThumbUpIcon class="size-5" />
-                <span class="text-gray-600 group-hover:text-gray-800 font-medium">
-                    {{ post?.has_reaction ? 'Unlike' : 'Like' }}
-                </span>
-            </button>
-            <button
-                class="flex flex-1 justify-center gap-2  group items-center text-gray-500 hover:text-gray-700 p-2  bg-gray-200 rounded-lg ">
-                <ChatBubbleLeftRightIcon class="size-5" />
-                <span class="text-gray-600 group-hover:text-gray-800 font-medium">Comment</span>
-            </button>
+        <!-- Attachment Section -->
+
+        <!-- comment section -->
+        <Disclosure v-slot="{ open }">
+            <div class="flex py-2 px-2 gap-2">
+                <button @click="sendReaction" :class="['flex flex-1 justify-center gap-2 group items-center p-2 rounded-lg',
+                    post?.has_reaction ? 'text-blue-600 hover:text-blue-800 bg-blue-200' : 'text-gray-500 hover:text-gray-700 bg-gray-200'
+                ]">
+                    <HandThumbUpIcon class="size-5" />
+                    <span class="text-gray-600 group-hover:text-gray-800 font-medium">
+                        {{ post.num_of_reactions }} {{ post.num_of_reactions === 1 ? 'Like' : 'Likes' }}
+                    </span>
+                </button>
+                <DisclosureButton
+                    class="flex flex-1 justify-center gap-2  group items-center text-gray-500 hover:text-gray-700 p-2  bg-gray-200 rounded-lg ">
+                    <ChatBubbleLeftRightIcon class="size-5" />
+                    <span class="text-gray-600 group-hover:text-gray-800 font-medium">
+                        {{ post.num_of_comments > 0 ? post.num_of_comments : '' }}
+                    </span>
+                </DisclosureButton>
+            </div>
+            <DisclosurePanel class="px-4 pb-2 pt-4 text-sm text-gray-500">
+                <div class="flex w-full h-full justify-between gap-2">
+                    <div class="h-full flex flex-col">
+                        <UserTag :comment-user-tag="true" :comment-user="authUser" :show-name="false" :show-time="false"
+                            :class="['p-0']" />
+                    </div>
+                    <div class="flex-1 self-center mt-2">
+                        <TextInput :auto-resize="true" :rows="2" placeholder="Enter Your Comment Here"
+                            v-model="newCommentValue" />
+                    </div>
+                    <div class="self-center">
+                        <PrimaryButton class="bg-indigo-600" @click="createUserComment">
+                            <PaperAirplaneIcon class="size-4 text-white" />
+                        </PrimaryButton>
+                    </div>
+                </div>
+                <div>
+                    <!-- comments -->
+                    <!-- <pre>{{ props.post.comments }}</pre> -->
+                    <div v-if="props.post.comments.length > 0" v-for="comment of props.post.comments" :key="comment.id">
+                        <div class="flex flex-col w-full h-full gap-2 my-2">
+                            <div class="h-full flex flex-col">
+                                <UserTag :comment-user-tag="true" :comment-owner="comment" :show-name="true"
+                                    :show-time="true" :comment-owner-tag="true" :class="['gap-1']" />
+                            </div>
+                            <div class="flex flex-1 pl-12">
+                                <ReadLessOrMore :body="comment.comment" />
+                            </div>
+                            <div class="mt-2 border border-b-slate-300" />
+                        </div>
+                    </div>
+                </div>
+            </DisclosurePanel>
+        </Disclosure>
+        <!-- comment section -->
+        <div>
         </div>
     </div>
 </template>

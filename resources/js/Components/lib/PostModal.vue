@@ -105,7 +105,7 @@
 
                                                     <img v-if="attachment && !attachment?.file ? isImage(attachment) : isImage(attachment.file)"
                                                         :src="attachment?.url"
-                                                        :class="['aspect-square rounded-md object-cover',]" />
+                                                        :class="['size-full aspect-square rounded-md object-cover',]" />
 
                                                     <div v-else class="flex flex-col items-center justify-center">
                                                         <PaperClipIcon class="size-10 text-gray-400" />
@@ -172,7 +172,6 @@ import {
     DialogPanel,
     DialogTitle,
 } from '@headlessui/vue'
-// import TextInput from '@/Components/TextInput.vue';
 import UserTag from '@/Components/lib/UserTag.vue'
 import { XMarkIcon, PaperClipIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon, DocumentIcon, PlusCircleIcon } from '@heroicons/vue/24/outline'

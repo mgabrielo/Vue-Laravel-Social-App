@@ -52,6 +52,12 @@ onMounted(() => {
     adjustInputHeight()
 });
 
+watch(() => model.value, () => {
+    setTimeout(() => {
+        adjustInputHeight()
+    }, 10);
+})
+
 </script>
 
 <template>

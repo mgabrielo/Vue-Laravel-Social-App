@@ -4,9 +4,11 @@
 
         <div class="container h-full w-auto lg:w-[800px] mx-auto overflow-auto">
             <div class="mt-0 relative bg-white group">
-                <img class="w-full h-[200px] object-cover"
-                    :src="coverImgSrc || user.cover_url || 'https://cdn.pixabay.com/photo/2018/07/09/04/07/art-3525343_1280.png'"
-                    alt="" />
+                <img class="w-full h-[200px] object-cover" v-if="coverImgSrc || user.cover_url"
+                    :src="coverImgSrc || user.cover_url" alt="" />
+
+                <img :class="[!coverImgSrc && !user.cover_url ? 'w-full h-[200px] object-cover' : 'hidden']"
+                    :src="'https://cdn.pixabay.com/photo/2018/07/09/04/07/art-3525343_1280.png'" alt="" />
                 <!-- profile cover -->
                 <div v-if="isYourProfile" class="absolute top-2 right-2">
                     <button v-if="!coverImgSrc" class=" flex gap-1 items-center 
@@ -36,8 +38,10 @@
             <div class="flex gap-2 bg-white ">
                 <div
                     class="flex items-center justify-center relative group/avatar ml-[45px] -mt-[50px] size-[100px] rounded-full">
-                    <img class="w-full h-full rounded-full object-cover"
-                        :src="avatarImgSrc || user.avatar_url || 'https://cdn.pixabay.com/photo/2019/08/11/18/59/icon-4399701_1280.png'" />
+                    <img class="w-full h-full rounded-full object-cover" v-if="avatarImgSrc || user.avatar_url"
+                        :src="avatarImgSrc || user.avatar_url" />
+                    <img class="w-full h-full rounded-full object-cover" v-if="!avatarImgSrc && !user.avatar_url"
+                        :src="'https://cdn.pixabay.com/photo/2019/08/11/18/59/icon-4399701_1280.png'" />
                     <!-- profile avatar  -->
                     <button v-show="isYourProfile" v-if="!avatarImgSrc"
                         class="absolute left-0 right-0 top-0 bottom-0 flex 

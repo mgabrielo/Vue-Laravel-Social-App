@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\User;
 use App\Models\Group;
+use App\Models\Comment;
 use App\Models\PostReaction;
 use App\Models\PostAttachment;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +33,10 @@ class Post extends Model
 
     public function attachments():HasMany{
          return $this->hasMany(PostAttachment::class)->latest();
+    }
+
+    public function comments():HasMany{
+         return $this->hasMany(Comment::class)->latest();
     }
     
     public function reactions():HasMany{
