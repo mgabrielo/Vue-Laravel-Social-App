@@ -1,5 +1,5 @@
 <template>
-    <Disclosure v-slot="{ open }" v-if="props.body">
+    <Disclosure v-slot="{ open }" v-if="props.body" as="div" class="flex flex-col w-full">
         <div class="ck-content" v-if="!open && props.body.length < 100" v-html="props.body" />
         <div class="ck-content" v-if="!open && props.body.length > 100" v-html="props.body.substring(0, 100) + '...'" />
         <DisclosurePanel>

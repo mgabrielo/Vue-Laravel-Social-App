@@ -16,6 +16,7 @@ use App\Http\Requests\StorePostRequest;
 use App\Http\Resources\CommentResource;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UpdatePostRequest;
+use App\Http\Requests\UpdateCommentRequest;
 
 class PostController extends Controller
 {
@@ -185,7 +186,24 @@ class PostController extends Controller
             'user_id'=>Auth::id(),
         ]);
         return response()->json([
-            'comment'=>new CommentResource($comment)
+            'comment'=>new CommentResource($comment),
         ])->setStatusCode(201);
+    }
+
+    public function deleteComment(Comment $comment){
+        if($comment->user_id !== Auth::id()){
+            return response('Not Authorized to Delete Comment')->setStatusCode(403);
+        }
+        $comment->delete();
+        return response('')->setStatusCode(200);
+    }
+
+    public function updateComment(UpdateCommentRequest $request,Comment $comment){
+        $data=$request->validated();
+        $comment->update([
+            'comment'=>nl2br($data['comment'])
+        ]);
+
+        return new CommentResource($comment);
     }
 }

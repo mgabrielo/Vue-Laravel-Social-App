@@ -1,35 +1,34 @@
 <script setup>
 import { computed } from 'vue'
-import { DocumentIcon, ArrowDownTrayIcon, HandThumbUpIcon, ChatBubbleLeftRightIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
-import { PencilIcon, TrashIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline'
-import {
-    Disclosure, DisclosureButton, DisclosurePanel,
-    Menu, MenuButton, MenuItems, MenuItem,
-} from '@headlessui/vue'
+import { DocumentIcon, ArrowDownTrayIcon, HandThumbUpIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
+import { PaperAirplaneIcon } from '@heroicons/vue/24/outline'
+import { Disclosure, DisclosureButton, DisclosurePanel, } from '@headlessui/vue'
 import TextInput from '@/Components/TextInput.vue';
 import UserTag from '@/Components/lib/UserTag.vue'
 import { usePage, router } from '@inertiajs/vue3'
 import { isImage } from '@/utils.js'
 import axiosClient from '@/axiosClient';
-import PrimaryButton from '../PrimaryButton.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { ref } from 'vue';
-import ReadLessOrMore from './ReadLessOrMore.vue';
+import ReadLessOrMore from '@/Components/lib/ReadLessOrMore.vue';
+import EditDeleteMenu from '@/Components/lib/EditDeleteMenu.vue';
+import { watch } from 'vue';
 
 const props = defineProps({
     post: Object
 })
 
 const authUser = usePage().props.auth.user
+const allComments = ref(props.post.comments);
 const isYourProfile = computed(() => authUser && authUser.id === props.post.user.id)
 const computedAttachmentLength = computed(() => props.post.attachments.length - 4)
 const newCommentValue = ref('')
 const emit = defineEmits(['editClick', 'attachmentClick'])
-
+const editingComment = ref(null)
+const editingCommentId = ref(null)
 function openEditModal() {
     emit('editClick', props.post)
 }
-
-
 
 function submitDelete() {
     if (window.confirm('Are you sure you want to delete this post..?')) {
@@ -51,15 +50,53 @@ const sendReaction = async () => {
         }
     })
 }
-
 const createUserComment = async () => {
     await axiosClient.post(route('post.comment.create', props.post), { comment: newCommentValue.value }).then((res) => {
         if (res.data?.comment && props.post) {
             newCommentValue.value = ''
-            console.log(res.data)
+            allComments.value = [res.data.comment, ...props.post.comments,]
         }
     })
 }
+const deleteComment = async (comment) => {
+    if (!window.confirm('Are you sure you want to delete this comment..?')) {
+        return false;
+    }
+    await axiosClient.delete(route('post.comment.delete', comment.id),).then((res) => {
+        if (res.status == 200) {
+            props.post.comments = props.post.comments.filter((c) => c.id !== comment.id)
+            props.post.num_of_comments--;
+        }
+    })
+}
+const editComment = (comment) => {
+    editingCommentId.value = comment.id
+    editingComment.value = {
+        id: comment.id,
+        comment: comment.comment.replace(/<br\s*\/?>/gi, '\n')
+    }
+}
+
+const updateComment = async () => {
+    await axiosClient.put(route('post.comment.update', editingCommentId.value), { comment: editingComment.value.comment })
+        .then((res) => {
+            if (res.status == 200) {
+                props.post.comments = props.post.comments.map((comment_item) => {
+                    if (comment_item.id == res.data.id) {
+                        return res.data
+                    }
+                    return comment_item
+                });
+                props.post.num_of_comments--;
+                editingComment.value = null
+            }
+        })
+}
+
+watch(() => props.post.comments, () => {
+    allComments.value = props.post.comments
+})
+
 </script>
 
 
@@ -68,41 +105,7 @@ const createUserComment = async () => {
         <div class="flex justify-between items-center mb-2 ">
             <UserTag :post="props.post" class="gap-2" />
             <div class="justify-end">
-                <Menu v-if="isYourProfile" as="div" class="relative inline-block text-left z-30">
-                    <div>
-                        <MenuButton class="inline-flex w-full">
-                            <EllipsisVerticalIcon class="size-5 font-semibold" />
-                        </MenuButton>
-                    </div>
-                    <transition enter-active-class="transition duration-100 ease-out"
-                        enter-from-class="transform scale-95 opacity-0" enter-to-class="transform scale-100 opacity-100"
-                        leave-active-class="transition duration-75 ease-in"
-                        leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
-                        <MenuItems
-                            class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
-                            <div class="px-1 py-1">
-                                <MenuItem v-slot="{ active }">
-                                <button :class="[
-                                    active ? 'bg-slate-100' : 'bg-transparent',
-                                    'group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900',
-                                ]" @click="openEditModal">
-                                    <PencilIcon :active="active" class="mr-2 h-5 w-5 text-slate-700" aria-hidden="true" />
-                                    Edit
-                                </button>
-                                </MenuItem>
-                                <MenuItem v-slot="{ active }">
-                                <button :class="[
-                                    active ? 'bg-slate-100' : 'bg-transparent',
-                                    'group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900',
-                                ]" @click="submitDelete">
-                                    <TrashIcon :active="active" class="mr-2 h-5 w-5 text-slate-700" aria-hidden="true" />
-                                    Delete
-                                </button>
-                                </MenuItem>
-                            </div>
-                        </MenuItems>
-                    </transition>
-                </Menu>
+                <EditDeleteMenu @edit="openEditModal" @delete="submitDelete" :is-your-profile="isYourProfile" />
             </div>
         </div>
         <div>
@@ -191,22 +194,46 @@ const createUserComment = async () => {
                         </PrimaryButton>
                     </div>
                 </div>
+                <!-- comments -->
                 <div>
-                    <!-- comments -->
                     <!-- <pre>{{ props.post.comments }}</pre> -->
-                    <div v-if="props.post.comments.length > 0" v-for="comment of props.post.comments" :key="comment.id">
+                    <div v-if="props.post.comments.length > 0" v-for="comment of allComments" :key="comment.id">
                         <div class="flex flex-col w-full h-full gap-2 my-2">
-                            <div class="h-full flex flex-col">
-                                <UserTag :comment-user-tag="true" :comment-owner="comment" :show-name="true"
-                                    :show-time="true" :comment-owner-tag="true" :class="['gap-1']" />
+                            <div class="flex justify-between gap-2 items-center">
+
+                                <div class="h-full flex flex-col" v-if="comment && comment?.user?.avatar_url">
+                                    <UserTag :comment-user-tag="true" :comment-owner="comment" :show-name="true"
+                                        :show-time="true" :comment-owner-tag="true" :class="['gap-1']" />
+
+                                </div>
+                                <div v-if="!editingComment">
+                                    <EditDeleteMenu @edit="editComment(comment)" @delete="deleteComment(comment)"
+                                        :is-your-profile="comment?.user?.id ? comment?.user?.id === authUser?.id : false"
+                                        class="justify-self-end" />
+                                </div>
+
                             </div>
-                            <div class="flex flex-1 pl-12">
+                            <div v-if="editingComment && comment.id === editingCommentId">
+                                <TextInput :auto-resize="true" :rows="2" placeholder="Enter Your Comment Here"
+                                    v-model="editingComment.comment" />
+                            </div>
+                            <div v-else class="flex flex-1 pl-12">
                                 <ReadLessOrMore :body="comment.comment" />
+                            </div>
+                            <div v-if="editingComment && comment.id === editingCommentId" class="flex justify-end gap-2">
+                                <PrimaryButton class="bg-indigo-600 flex gap-2" @click="updateComment(comment)">
+                                    <span class="capitalize text-white font-bold text-md">Update Comment</span>
+                                </PrimaryButton>
+                                <PrimaryButton class="bg-transparent flex gap-2 hover:bg-transparent"
+                                    @click="editingComment = null">
+                                    <span class="capitalize text-red-600 font-bold text-md">Cancel</span>
+                                </PrimaryButton>
                             </div>
                             <div class="mt-2 border border-b-slate-300" />
                         </div>
                     </div>
                 </div>
+                <!-- comments -->
             </DisclosurePanel>
         </Disclosure>
         <!-- comment section -->
