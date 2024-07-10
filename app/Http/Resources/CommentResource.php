@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use App\Http\Resources\UserResource;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,6 +28,8 @@ class CommentResource extends JsonResource
                 "username" => $this->user->username,
                 "avatar_url" =>$this->user->avatar_path ? Storage::url($this->user->avatar_path) : null,
             ],
+            'num_of_comment_reactions'=>$this->reactions->count(),
+            'has_comment_reaction'=>  $this->reactions->count() > 0,
         ];
     }
 }

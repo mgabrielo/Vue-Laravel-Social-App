@@ -69,7 +69,8 @@ watch(() => model.value, () => {
     <div v-if="autoResize" class="w-full">
         <textarea :class="[
             moreClass ?
-                moreClass :
+                'w-full overflow-hidden border-gray-300 py-1 px-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm '
+                + moreClass :
                 'w-full overflow-hidden border-gray-300 py-1 px-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm'
         ]" v-model="model" ref="input" :placeholder="props.placeholder" @input="onInputChange" :rows="1"
             :readonly="readonly"></textarea>

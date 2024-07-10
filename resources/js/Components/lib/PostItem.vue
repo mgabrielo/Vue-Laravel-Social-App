@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { DocumentIcon, ArrowDownTrayIcon, HandThumbUpIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
-import { PaperAirplaneIcon } from '@heroicons/vue/24/outline'
+import { PaperAirplaneIcon, HandThumbUpIcon as HandThumbUpOutline, ArrowUturnLeftIcon } from '@heroicons/vue/24/outline'
 import { Disclosure, DisclosureButton, DisclosurePanel, } from '@headlessui/vue'
 import TextInput from '@/Components/TextInput.vue';
 import UserTag from '@/Components/lib/UserTag.vue'
@@ -19,7 +19,11 @@ const props = defineProps({
 })
 
 const authUser = usePage().props.auth.user
-const allComments = ref(props.post.comments);
+const allComments = ref(props.post.comments.map(comment => ({
+    ...comment,
+    has_comment_reaction: comment.has_comment_reaction || false,
+    num_of_comment_reactions: comment.num_of_comment_reactions || 0
+})));
 const isYourProfile = computed(() => authUser && authUser.id === props.post.user.id)
 const computedAttachmentLength = computed(() => props.post.attachments.length - 4)
 const newCommentValue = ref('')
@@ -93,9 +97,25 @@ const updateComment = async () => {
         })
 }
 
+const sendCommentReactionLike = async (comment) => {
+    await axiosClient.post(route('post.comment.reaction', comment.id), { reaction: 'like' })
+        .then((res) => {
+            if (res.data) {
+                allComments.value = props.post.comments.map((c) => ({
+                    ...c,
+                    has_comment_reaction: c.id === comment.id ? res.data.has_comment_reaction : c.has_comment_reaction,
+                    num_of_comment_reactions: c.id === comment.id ? res.data.num_of_comment_reactions : c.num_of_comment_reactions
+                }))
+            }
+        })
+}
+const sendCommentReactionReply = async () => {
+    console.log('send')
+}
+
 watch(() => props.post.comments, () => {
     allComments.value = props.post.comments
-})
+}, { deep: true });
 
 </script>
 
@@ -185,13 +205,14 @@ watch(() => props.post.comments, () => {
                             :class="['p-0']" />
                     </div>
                     <div class="flex-1 self-center mt-2">
-                        <TextInput :auto-resize="true" :rows="2" placeholder="Enter Your Comment Here"
-                            v-model="newCommentValue" />
+                        <TextInput :auto-resize="true" :rows="1" placeholder="Enter Your Comment Here"
+                            v-model="newCommentValue" :more-class="['py-0 mb-2']" />
                     </div>
                     <div class="self-center">
-                        <PrimaryButton class="bg-indigo-600" @click="createUserComment">
+                        <div class="bg-indigo-600 rounded-full p-2 cursor-pointer mb-1 justify-center"
+                            @click="createUserComment">
                             <PaperAirplaneIcon class="size-4 text-white" />
-                        </PrimaryButton>
+                        </div>
                     </div>
                 </div>
                 <!-- comments -->
@@ -203,7 +224,7 @@ watch(() => props.post.comments, () => {
 
                                 <div class="h-full flex flex-col" v-if="comment && comment?.user?.avatar_url">
                                     <UserTag :comment-user-tag="true" :comment-owner="comment" :show-name="true"
-                                        :show-time="true" :comment-owner-tag="true" :class="['gap-1']" />
+                                        :show-time="true" :comment-owner-tag="true" :class="['gap-1 text-lg']" />
 
                                 </div>
                                 <div v-if="!editingComment">
@@ -217,8 +238,23 @@ watch(() => props.post.comments, () => {
                                 <TextInput :auto-resize="true" :rows="2" placeholder="Enter Your Comment Here"
                                     v-model="editingComment.comment" />
                             </div>
-                            <div v-else class="flex flex-1 pl-12">
-                                <ReadLessOrMore :body="comment.comment" />
+                            <div class="pl-12 w-full">
+                                <div v-if="!editingComment" class="flex flex-1">
+                                    <ReadLessOrMore :body="comment.comment" />
+                                </div>
+                                <div class="flex gap-3">
+                                    <button @click="sendCommentReactionLike(comment)"
+                                        :class="['flex gap-2 items-center text-lg pt-1', comment.has_comment_reaction ? 'text-indigo-800' : 'text-indigo-300']">
+                                        <HandThumbUpOutline class="size-4 font-bold" />
+                                        {{ comment.num_of_comment_reactions }} {{ comment.num_of_comment_reactions === 1 ?
+                                            'like' : 'likes' }}
+                                    </button>
+                                    <button @click="sendCommentReactionReply"
+                                        class="flex gap-2 items-center pt-1 text-indigo-400 text-lg">
+                                        <ArrowUturnLeftIcon class="size-4 font-bold" />
+                                        <span>reply</span>
+                                    </button>
+                                </div>
                             </div>
                             <div v-if="editingComment && comment.id === editingCommentId" class="flex justify-end gap-2">
                                 <PrimaryButton class="bg-indigo-600 flex gap-2" @click="updateComment(comment)">

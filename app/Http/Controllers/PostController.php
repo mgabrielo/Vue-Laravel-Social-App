@@ -7,11 +7,13 @@ use App\Models\Comment;
 use App\Models\PostReaction;
 use Illuminate\Http\Request;
 use App\Models\PostAttachment;
+use App\Models\CommentReaction;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use App\Http\Enums\PostReactionEnum;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Enums\CommentReactionEnum;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Resources\CommentResource;
 use Illuminate\Support\Facades\Storage;
@@ -205,5 +207,37 @@ class PostController extends Controller
         ]);
 
         return new CommentResource($comment);
+    }
+
+
+    public function commentReaction(Request $request ,Comment $comment)
+    {
+        // dd($request);
+        $data=$request->validate([
+            'reaction' => [Rule::enum(CommentReactionEnum::class)]
+        ]);
+        try{
+            $userId=Auth::id();
+            $reaction=CommentReaction::where('user_id', $userId)->where('comment_id', $comment->id)->first();
+            if($reaction){
+                $reaction->delete();
+                $hasReaction=false;
+            }else{
+                CommentReaction::create([
+                    'comment_id'=> $comment->id,
+                    'user_id'=> $userId,
+                    'type'=> $data['reaction']
+                ]);
+                $hasReaction=true;
+            }
+            $reactions= CommentReaction::where('comment_id',$comment->id)->count();
+            return response()->json([
+                'has_comment_reaction'=>$hasReaction,
+                'num_of_comment_reactions'=>$reactions,
+                'comment'=>$comment
+            ])->setStatusCode(200);
+        }catch(Exception $e){
+            return redirect()->back()->withErrors(['error' =>'Failed to post comment reaction: ' . $e->getMessage()]);
+        }
     }
 }
