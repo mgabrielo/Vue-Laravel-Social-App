@@ -71,11 +71,10 @@ const openEditModal = (post) => {
     showEditModal.value = true
 }
 
-const openAttachmentPreviewModal = (res) => {
-    console.log({ post: res?.attachment, index: res?.index })
+const openAttachmentPreviewModal = ({ attachments, index }) => {
     attachmentPreviewPost.value = {
-        attachments: res?.attachment,
-        index: res?.index,
+        attachments: attachments,
+        index: index,
     }
     showAttachmentPreviewModal.value = true
 }

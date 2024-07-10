@@ -89,7 +89,7 @@ const show = computed({
 const currentIndex = ref(props.index)
 
 const attachment = computed(() => {
-    if (props.attachments.length > 0 && typeof currentIndex.value === 'number' && currentIndex.value >= 0) {
+    if (props.attachments?.length > 0 && typeof currentIndex.value === 'number' && currentIndex.value >= 0) {
         return props.attachments[currentIndex.value];
     }
 })
