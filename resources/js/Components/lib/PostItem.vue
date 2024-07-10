@@ -19,11 +19,7 @@ const props = defineProps({
 })
 
 const authUser = usePage().props.auth.user
-const allComments = ref(props.post.comments.map(comment => ({
-    ...comment,
-    has_comment_reaction: comment.has_comment_reaction || false,
-    num_of_comment_reactions: comment.num_of_comment_reactions || 0
-})));
+const allComments = ref(props.post?.comments);
 const isYourProfile = computed(() => authUser && authUser.id === props.post.user.id)
 const computedAttachmentLength = computed(() => props.post.attachments.length - 4)
 const newCommentValue = ref('')
@@ -58,7 +54,7 @@ const createUserComment = async () => {
     await axiosClient.post(route('post.comment.create', props.post), { comment: newCommentValue.value }).then((res) => {
         if (res.data?.comment && props.post) {
             newCommentValue.value = ''
-            allComments.value = [res.data.comment, ...props.post.comments,]
+            allComments.value = [res.data.comment, ...allComments.value]
             props.post.num_of_comments++;
         }
     })
@@ -69,8 +65,9 @@ const deleteComment = async (comment) => {
     }
     await axiosClient.delete(route('post.comment.delete', comment.id),).then((res) => {
         if (res.status == 200) {
-            allComments.value = allComments.value.filter(c => c.id !== comment.id),
-                props.post.num_of_comments--;
+
+            allComments.value = allComments.value.filter(c => c.id !== comment.id)
+            props.post.num_of_comments--;
         }
     })
 }
@@ -120,8 +117,8 @@ const sendCommentReactionReply = async () => {
     //     })
 }
 
-watch(() => props.post.comments, () => {
-    allComments.value = props.post.comments
+watch(() => props.post?.comments, () => {
+    allComments.value = props.post?.comments
 }, { deep: true });
 
 </script>
