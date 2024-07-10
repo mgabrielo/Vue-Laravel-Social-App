@@ -59,6 +59,7 @@ const createUserComment = async () => {
         if (res.data?.comment && props.post) {
             newCommentValue.value = ''
             allComments.value = [res.data.comment, ...props.post.comments,]
+            props.post.num_of_comments++;
         }
     })
 }
