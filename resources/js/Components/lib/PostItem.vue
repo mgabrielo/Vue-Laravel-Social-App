@@ -101,16 +101,22 @@ const sendCommentReactionLike = async (comment) => {
     await axiosClient.post(route('post.comment.reaction', comment.id), { reaction: 'like' })
         .then((res) => {
             if (res.data) {
-                allComments.value = props.post.comments.map((c) => ({
-                    ...c,
-                    has_comment_reaction: c.id === comment.id ? res.data.has_comment_reaction : c.has_comment_reaction,
-                    num_of_comment_reactions: c.id === comment.id ? res.data.num_of_comment_reactions : c.num_of_comment_reactions
-                }))
+                allComments.value = props.post.comments.map((c) => {
+                    if (c.id === res.data?.comment?.id) {
+                        c.has_comment_reaction = res.data?.has_comment_reaction
+                        c.num_of_comment_reactions = res.data?.num_of_comment_reactions
+                    }
+                    return c;
+                });
             }
         })
 }
 const sendCommentReactionReply = async () => {
     console.log('send')
+    // await axiosClient.put(route('post.comment.reaction', props.post), { reaction: 'like' })
+    //     .then((res) => {
+    //         console.log(res.data)
+    //     })
 }
 
 watch(() => props.post.comments, () => {
