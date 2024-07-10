@@ -68,8 +68,8 @@ const deleteComment = async (comment) => {
     }
     await axiosClient.delete(route('post.comment.delete', comment.id),).then((res) => {
         if (res.status == 200) {
-            props.post.comments = props.post.comments.filter((c) => c.id !== comment.id)
-            props.post.num_of_comments--;
+            allComments.value = allComments.value.filter(c => c.id !== comment.id),
+                props.post.num_of_comments--;
         }
     })
 }
