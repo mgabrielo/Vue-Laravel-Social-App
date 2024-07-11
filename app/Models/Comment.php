@@ -12,10 +12,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Comment extends Model
 {
     use HasFactory;
+
+    public array $childComments=[];
+
     protected $fillable=[
         'post_id', 
         'comment', 
-        'user_id'
+        'user_id',
+        'parent_id'
     ];
 
     public function user():BelongsTo{
@@ -26,5 +30,9 @@ class Comment extends Model
     }
     public function reactions():HasMany{
         return $this->hasMany(CommentReaction::class);
+  }
+
+  public function comments():HasMany{
+    return $this->hasMany(self::class, 'parent_id');
   }
 }

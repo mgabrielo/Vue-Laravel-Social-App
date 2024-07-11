@@ -171,7 +171,8 @@ watch(() => props.post?.comments, () => {
                 </DisclosureButton>
             </div>
             <DisclosurePanel class="px-4 pb-2 pt-4 text-sm text-gray-500">
-                <CommentList :post="props.post" />
+                <!-- <pre>{{ props.post.comment }}</pre> -->
+                <CommentList :post="props.post" :data="{ comments: props.post?.comments }" />
             </DisclosurePanel>
         </Disclosure>
         <!-- comment section -->

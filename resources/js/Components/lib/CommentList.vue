@@ -17,8 +17,8 @@
         </div>
         <!-- comments -->
         <div>
-            <div v-if="props.post.comments.length > 0" v-for="comment of allComments" :key="comment.id">
-                <div class="flex flex-col w-full h-full gap-2 my-2">
+            <div v-if="props.data.comments.length > 0" v-for="comment of allComments" :key="comment.id">
+                <div class="flex flex-col w-full h-full mt-2">
                     <div class="flex justify-between gap-2 items-center">
 
                         <div class="h-full flex flex-col" v-if="comment && comment?.user?.avatar_url">
@@ -72,29 +72,20 @@
                                 {{ comment.num_of_comment_reactions }} {{ comment.num_of_comment_reactions === 1 ?
                                     'like' : 'likes' }}
                             </button>
-                            <DisclosureButton class="flex gap-2 items-center pt-1 text-indigo-400 text-lg">
+                            <DisclosureButton as="button" class=" flex gap-2 items-center pt-1 text-indigo-400 text-lg">
                                 <ArrowUturnLeftIcon class="size-4 font-bold" />
-                                <span>reply</span>
+                                {{ comment.num_of_comments > 0 ? comment.num_of_comments : 0 }}
+                                <span> {{ comment.num_of_comments === 1 ? 'reply' : 'replys' }}</span>
                             </DisclosureButton>
                         </div>
 
                         <DisclosurePanel>
-                            <div class="flex items-center gap-2 mt-2">
-                                <div class="flex-1">
-                                    <TextInput :auto-resize="true" :rows="1" placeholder="Enter Your Comment Here"
-                                        v-model="newCommentValue" :more-class="['py-0']" />
-                                </div>
-                                <div class="">
-                                    <div class="bg-indigo-600 rounded-full p-2 cursor-pointer mb-1 justify-center"
-                                        @click="createSubComment">
-                                        <PaperAirplaneIcon class="size-4 text-white" />
-                                    </div>
-                                </div>
-                            </div>
+                            <CommentList :post="props.post" :parent-comment="comment"
+                                :data="{ comments: comment.comments }" />
                         </DisclosurePanel>
                     </Disclosure>
 
-                    <div class="mt-2 border border-b-slate-300" />
+                    <div v-if="!props.parentComment?.id" class="mt-2 border border-b-slate-300" />
                 </div>
             </div>
         </div>
@@ -115,20 +106,38 @@ import ReadLessOrMore from '@/Components/lib/ReadLessOrMore.vue';
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue';
 
 const props = defineProps({
-    post: Object
+    post: {
+        type: Object,
+        required: false
+    },
+    parentComment: {
+        type: Object,
+        default: null,
+        required: false
+    },
+    data: {
+        type: Object,
+        required: false
+    }
 })
 const authUser = usePage().props.auth.user
-const allComments = ref(props.post?.comments);
+const allComments = ref(props.data?.comments);
 const newCommentValue = ref('')
 const editingComment = ref(null)
 const editingCommentId = ref(null)
-
 const createUserComment = async () => {
-    await axiosClient.post(route('post.comment.create', props.post), { comment: newCommentValue.value }).then((res) => {
-        if (res.data?.comment && props.post) {
+    await axiosClient.post(route('post.comment.create', props.post), {
+        comment: newCommentValue.value,
+        parent_id: props.parentComment?.id ? props.parentComment.id : null
+    }).then((res) => {
+        if (res.data.comment && props.post) {
             newCommentValue.value = ''
-            allComments.value = [res.data.comment, ...allComments.value]
+            allComments.value = props.data?.comments.unshift(res.data.comment)
+            if (props.parentComment?.id) {
+                props.parentComment.num_of_comments++
+            }
             props.post.num_of_comments++;
+
         }
     })
 }
@@ -138,9 +147,13 @@ const deleteComment = async (comment) => {
     }
     await axiosClient.delete(route('post.comment.delete', comment.id),).then((res) => {
         if (res.status == 200) {
-
-            allComments.value = allComments.value.filter(c => c.id !== comment.id)
+            const commentIndex = props.data?.comments.findIndex(c => c.id === comment.id)
+            allComments.value = props.data?.comments.splice(commentIndex, 1)
+            if (props.parentComment?.id) {
+                props.parentComment.num_of_comments--
+            }
             props.post.num_of_comments--;
+
         }
     })
 }
@@ -156,7 +169,7 @@ const updateComment = async () => {
     await axiosClient.put(route('post.comment.update', editingCommentId.value), { comment: editingComment.value.comment })
         .then((res) => {
             if (res.status == 200) {
-                props.post.comments = props.post.comments.map((comment_item) => {
+                allComments.value = props.data.comments.map((comment_item) => {
                     if (comment_item.id == res.data.id) {
                         return res.data
                     }
@@ -172,7 +185,7 @@ const sendCommentReactionLike = async (comment) => {
     await axiosClient.post(route('post.comment.reaction', comment.id), { reaction: 'like' })
         .then((res) => {
             if (res.data) {
-                allComments.value = props.post.comments.map((c) => {
+                allComments.value = props.data.comments.map((c) => {
                     if (c.id === res.data?.comment?.id) {
                         c.has_comment_reaction = res.data?.has_comment_reaction
                         c.num_of_comment_reactions = res.data?.num_of_comment_reactions
@@ -183,12 +196,9 @@ const sendCommentReactionLike = async (comment) => {
         })
 }
 
-const createSubComment = () => {
-    console.log('send sub comment')
-}
 
-watch(() => props.post?.comments, () => {
-    allComments.value = props.post?.comments
+watch(() => props.data.comments, () => {
+    allComments.value = props.data.comments
 }, { deep: true });
 </script>
 

@@ -28,6 +28,10 @@ class CommentResource extends JsonResource
                 "username" => $this->user->username,
                 "avatar_url" =>$this->user->avatar_path ? Storage::url($this->user->avatar_path) : null,
             ],
+            'comments'=>$this->childComments,
+            'num_of_comments'=>count($this->childComments),
+            // 'comments'=>self::collection($this->comments),
+            // 'num_of_comments'=>$this->comments->count(),
             'num_of_comment_reactions'=>$this->reactions->count(),
             'has_comment_reaction'=>  $this->reactions->count() > 0,
         ];
